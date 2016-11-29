@@ -7,6 +7,13 @@ class Packet:
     def append(self, data):
         self.data.append(data)
 
+    def indexOf(self, item):
+        index = -1
+        for i in range(251, -1, -1):
+            if self.data[i] == item:
+                index = i
+        return index
+
     def length(self):
         return len(self.data)
 

@@ -31,6 +31,7 @@ class Sender:
         encryptedPackets = []
         for p in packets:
             data = self.rc4.crypt(str(p))
+            self.rc4.applyPRGA()
             seqCount = p.seqCount
             c = EncryptedPacket(seqCount, data)
             encryptedPackets.append(c)
@@ -48,11 +49,11 @@ class Sender:
                 packet.seqCount = self.SCA;
                 self.SCA = self.SCA + 1
             packet.append(pt[i])
-        self.pad(packets[-1])
+        self.applyPadding(packets[-1])
 
         return packets
 
-    def pad(self, packet):
+    def applyPadding(self, packet):
         length = len(packet.data)
         if length  == 252:
             return

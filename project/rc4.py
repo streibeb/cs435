@@ -4,19 +4,31 @@ class Rc4:
 
     def __init__(self, key):
         self.key = bytearray(key)
-        self.state = State(range(256))
+        self.state = self.ksa(self.key, State(range(256)))
+        self.applyPRGA()
 
     def crypt(self, data):
-        S = self.ksa(self.key, self.state)
-
+        S = self.state
         out = []
         for char in data:
+            t = (S.body[S.i] + S.body[S.j]) % 256
+            out.append(chr(ord(char) ^ S.body[t]))
+
+        return "".join(out)
+
+    def applyPRGA(self):
+        S = self.state
+        for m in range(len(S.body)):
             S.i = (S.i + 1) % 256
             S.j = (S.j + S.body[S.i]) % 256
             S.body[S.i], S.body[S.j] = S.body[S.j], S.body[S.i]
-            t = (S.body[S.i] + S.body[S.j]) % 256
-            out.append(chr(ord(char) ^ S.body[t]))
-        return "".join(out)
+
+    def applyIPRGA(self):
+        S = self.state
+        for m in range(len(S.body)):
+            S.body[S.i], S.body[S.j] = S.body[S.j], S.body[S.i]
+            S.j = (S.j - S.body[S.i] + 256) % 256
+            S.i = (S.i - 1) % 256
 
     @staticmethod
     def ksa(key, Sin):
@@ -32,17 +44,3 @@ class Rc4:
         Sout.i = i
         Sout.j = j
         return Sout
-
-    @staticmethod
-    def prga(S):
-        for m in range(len(S.body)):
-            S.i = (S.i + 1) % 256
-            S.j = (S.j + S.body[S.i]) % 256
-            S.body[S.i], S.body[S.j] = S.body[S.j], S.body[S.i]
-
-    @staticmethod
-    def iprga(S):
-        for m in range(len(S.body)):
-            S.body[S.i], S.body[S.j] = S.body[S.j], S.body[S.i]
-            S.j = (S.j - S.body[S.i] + 256) % 256
-            S.i = (S.i - 1) % 256

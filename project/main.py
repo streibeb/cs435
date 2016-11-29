@@ -1,49 +1,135 @@
-import sys, getopt
+import sys, argparse
 from sender import Sender
+from receiver import Receiver
 from packet import EncryptedPacket
 
 def main(argv):
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-k", "--key", required=True)
+    group = parser.add_mutually_exclusive_group(required=True)
+    group.add_argument("-p", "--plaintext")
+    group.add_argument("-f", "--filename")
+    args = parser.parse_args()
+
+    key = args.key
+
+    plaintext = ''
+    if args.filename:
+        filename = args.filename
+        f = open(filename, 'r')
+        plaintext = f.read()
+        f.close()
+    if args.plaintext:
+        plaintext = args.plaintext
+
+    test = []
     try:
-        opts, args = getopt.getopt(argv,"hk:f:",["key=", "filename="])
-    except getopt.GetoptError:
-        print 'main.py -k <key> -f <filename>'
-        sys.exit(2)
-    for opt, arg in opts:
-        if opt == '-h':
-            print 'main.py -k <key> -f <filename>'
-            sys.exit()
-        elif opt in ("-k", "--key"):
-            key = str(arg)
-        elif opt in ("-f", "--filename"):
-            filename = str(arg)
+        print '### TEST 1 [0,1,2,3] ###\n'
+        test.append(test1(key, plaintext))
+        print '### TEST 2 [1,0,3,2] ###\n'
+        test.append(test2(key, plaintext))
+        print '### TEST 3 [3,2,1,0] ###\n'
+        test.append(test3(key, plaintext))
+    except IndexError:
+        print '\nWARNING: Message not long enough to perform all tests\n'
 
-    S = Sender('ABCDEF0123456789ABC2014200319344')
-    C = S.send('Hello World ' * (80))
-    print C
-    for c in C:
-        print c
+    print '#  | Success?'
+    print '---+---------'
+    for i in range(len(test)):
+        print '%-2i | %s' % (i+1, test[i])
 
+def test1(key, sent):
+    S = Sender(key)
+    R = Receiver(key)
 
-    # rc4 = Rc4('ABCDEF0123456789ABC2014200319344')
-    # c = rc4.crypt('Hello World')
-    # print c
-    # p = rc4.crypt(c)
-    # print p
+    print '### SEND ###'
+    print sent
+    print '############'
 
-    # inVal = 0
-    #
-    # md5_a = hashlib.md5()
-    # outVal = bytearray()
-    # for i in range(4):
-    #     outVal.insert(0, (inVal >> i*8) & 0xff)
-    # md5_a.update(outVal)
-    # md5_a.update('Hello')
-    # print md5_a.hexdigest()
-    #
-    # md5_b = hashlib.md5()
-    # md5_b.update(str(inVal))
-    # md5_b.update('Hello')
-    # print md5_b.hexdigest()
+    while True:
+        C = S.send(sent)
+        print '### ENCRYPTED PACKETS ###'
+        for c in C:
+            print c
+        print '#########################'
+        err, received = R.receive(C)
+        if (err == None):
+            break
+        else:
+            print 'Uh Oh'
+            sys.exit(1)
+
+    print '### RECEIVE ###'
+    print received
+    print '###############'
+    test = sent == received
+    print 'sent = received? ' + str(test)
+    print '###############\n'
+
+    return test
+
+def test2(key, sent):
+    S = Sender(key)
+    R = Receiver(key)
+
+    print '### SEND ###'
+    print sent
+    print '############'
+
+    while True:
+        C = S.send(sent)
+        C = [C[1],C[0],C[3],C[2]]
+        print '### ENCRYPTED PACKETS ###'
+        for c in C:
+            print c
+        print '#########################'
+        err, received = R.receive(C)
+        if (err == None):
+            break
+        else:
+            print 'Uh Oh'
+            sys.exit(1)
+
+    print '### RECEIVE ###'
+    print received
+    print '###############'
+    test = sent == received
+    print 'sent = received? ' + str(test)
+    print '###############\n'
+
+    return test
+
+def test3(key, sent):
+    S = Sender(key)
+    R = Receiver(key)
+
+    print '### SEND ###'
+    print sent
+    print '############'
+
+    while True:
+        C = S.send(sent)
+        C = [C[3],C[2],C[1],C[0]]
+        print '### ENCRYPTED PACKETS ###'
+        for c in C:
+            print c
+        print '#########################'
+        err, received = R.receive(C)
+        if (err == None):
+            break
+        else:
+            print 'Uh Oh'
+            sys.exit(1)
+
+    print '### RECEIVE ###'
+    print received
+    print '###############'
+    test = sent == received
+    print 'sent = received? ' + str(test)
+    print '###############\n'
+
+    return test
 
 if __name__ == '__main__':
     main(sys.argv[1:])

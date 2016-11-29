@@ -2,60 +2,76 @@ import hashlib
 from packet import Packet, EncryptedPacket
 from rc4 import Rc4
 
-class Sender:
+class Receiver:
+
+    #    Initially (S, i, j)B = (S, i, j)0 and SCB = 0. When receiving a new packet, B compares its
+    # own SC value (SCB) with the SC value of the packet. If the difference of the SC value of
+    # the packet and its own SC value (SCpacket - SCB) is 0, then (S, i, j)B is used as the RC4
+    # state to decrypt the data segment and hash value of that incoming packet and then
+    # increase the sequence counter by 1. Otherwise, calculate the right RC4 state from current
+    # (S, i, j)B by applying certain rounds of PRGA or IPRGA, and then use the right RC4 state
+    # to decrypt the data segment and hash value of that incoming packet and set the sequence
+    # counter value of receiver by the SC value of the packet plus 1. B also needs to calculate
+    # the hash value according to the decrypted data (SC and data segment) and then compare
+    # it with the one directly get from decrypted packet. If they are not the same, B requests A
+    # to resend the packet.
 
     def __init__(self, key):
         self.key = key;
-        self.SCA = 0;
+        self.SCB = 0;
         self.rc4 = Rc4(self.key)
 
-    def send(self, plaintext):
-        # 1. The sender divides the input plaintext message into contiguous 252-byte data
-        #    segments and assigns SC to each of them. The sequence counter (SC) value is
-        #    increased by 1 in increased order (initially SCA = 0). If there are not enough data in
-        #    the data segment of the last data packet, pad a 1 followed by as many 0 as necessary.
-        packets = self.generatePackets(plaintext)
+    def receive(self, encryptedPackets):
+        err = []
+        packets = []
+        for c in encryptedPackets:
+            p = self.calculateState(c)
+            packets.append(p)
 
-        # 2. The sender calculates the hash value for that data packet by inputting SC and the
-        #    unencrypted data segment, and then places the 128-bit hash value into the data
-        #    packet.
         for p in packets:
             md5 = hashlib.md5()
             md5.update(str(p.seqCount))
             md5.update(p.data)
-            p.hash = md5.digest()
+            if p.hash != md5.digest():
+                return p.seqCount, None
 
-        # 3. The sender produces the encrypted data packets by only encrypting data segment and
-        #    hash value (do not encrypt SC value). The sender updates its SCA and (S, i, j)A after
-        #    the encryption.
-        encryptedPackets = []
+        packets.sort(key=lambda x: x.seqCount)
+        self.RemovePadding(packets[-1])
+
+        data = []
         for p in packets:
-            data = self.rc4.crypt(str(p))
-            seqCount = p.seqCount
-            c = EncryptedPacket(seqCount, data)
-            encryptedPackets.append(c)
+            data.append(str(p.data))
+        return None, ''.join(data)
 
-        return encryptedPackets
+    def calculateState(self, packet):
+        diff = self.SCB - packet.seqCount
 
-    def generatePackets(self, plaintext):
-        pt = bytearray(plaintext)
+        if diff == 0:
+            p = self.generatePacket(packet)
+            return p
+            self.SCB += 1
+        elif diff > 0:
+            self.rc4.applyIPRGA();
+            self.SCB -= 1
+            return self.calculateState(packet)
+        elif diff < 0:
+            self.rc4.applyPRGA()
+            self.SCB += 1
+            return self.calculateState(packet)
 
-        packets = []
-        for i in range(len(pt)):
-            if i % 252 == 0:
-                packet = Packet()
-                packets.append(packet)
-                packet.seqCount = self.SCA;
-                self.SCA = self.SCA + 1
-            packet.append(pt[i])
-        self.pad(packets[-1])
+    def generatePacket(self, encryptedPacket):
+        p = Packet()
 
-        return packets
+        p.seqCount = encryptedPacket.seqCount
 
-    def pad(self, packet):
-        length = len(packet.data)
-        if length  == 252:
-            return
-        packet.append(0b10000000)
-        for i in range(252 - length - 1):
-            packet.append(0b00000000)
+        temp = self.rc4.crypt(encryptedPacket.data)
+        for i in range(1, 253):
+            p.data.append(temp[i])
+        for i in range(253, 253+16):
+            p.hash.append(temp[i])
+
+        return p
+
+    def RemovePadding(self, packet):
+        index = packet.indexOf(0b10000000)
+        packet.data = packet.data[:index]

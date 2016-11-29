@@ -13,21 +13,26 @@ i <-- (i - 1) mod 256
 An RC4 state based secure unicast protocol is described in the following: Suppose A (sender) and B (receiver) posses the same secure key (128 bits) to initialize RC4 state (S,i, j)<sub>A</sub> for A and (S, i, j)<sub>B</sub> for B and initially (S, i, j)<sub>A</sub> = (S, i, j)<sub>B</sub> = (S, i, j)<sub>0</sub>. Initially A and B also set their sequence counters to zero. Each data packet has 272 bytes (4 bytes for sequence counter value, 252 bytes for data segment and 16 bytes for hash value):
 |SC (4 bytes)|Data Segment (252 bytes)|HV (16 bytes)|
 |-|-|-|
+
 **For Sender:**
+
 1. The sender divides the input plaintext message into contiguous 252-byte data
 segments and assigns SC to each of them. The sequence counter (SC) value is
 increased by 1 in increased order (initially SCA = 0). If there are not enough data in the data segment of the last data packet, pad a 1 followed by as many 0 as necessary.
+
 2. The sender calculates the hash value for that data packet by inputting SC and the unencrypted data segment, and then places the 128-bit hash value into the data
 packet.
+
 3. The sender produces the encrypted data packets by only encrypting data segment and hash value (do not encrypt SC value). The sender updates its SCA and (S, i, j)<sub>A</sub> after
 the encryption.
 
 **For Receiver:**
+
 Initially (S, i, j)B = (S, i, j)0 and SCB = 0. When receiving a new packet, B compares its own SC value (SCB) with the SC value of the packet. If the difference of the SC value of the packet and its own SC value (SCpacket - SCB) is 0, then (S, i, j)B is used as the RC4 state to decrypt the data segment and hash value of that incoming packet and then increase the sequence counter by 1. Otherwise, calculate the right RC4 state from current (S, i, j)B by applying certain rounds of PRGA or IPRGA, and then use the right RC4 state to decrypt the data segment and hash value of that incoming packet and set the sequence counter value of receiver by the SC value of the packet plus 1. B also needs to calculate the hash value according to the decrypted data (SC and data segment) and then compare it with the one directly get from decrypted packet. If they are not the same, B requests A to resend the packet.
 
 Write a program with two interfaces (one for sender, and the another for receiver) to implement the above secure unicast protocol.
 
-Test your program by a 1000 bytes message (4 packets). Suppose:
-**Case 1**: the sequence of the packets received is 0, 1, 2 and 3
-**Case 2**: the sequence of the packet received is 1, 0, 3 and 2
+Test your program by a 1000 bytes message (4 packets). Suppose:  
+**Case 1**: the sequence of the packets received is 0, 1, 2 and 3  
+**Case 2**: the sequence of the packet received is 1, 0, 3 and 2  
 **Case 3**: the sequence of the packet received is 3, 2, 1 and 0

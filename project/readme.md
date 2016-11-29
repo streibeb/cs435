@@ -13,7 +13,7 @@ i <-- (i - 1) mod 256
 An RC4 state based secure unicast protocol is described in the following: Suppose A (sender) and B (receiver) posses the same secure key (128 bits) to initialize RC4 state (S,i, j)<sub>A</sub> for A and (S, i, j)<sub>B</sub> for B and initially (S, i, j)<sub>A</sub> = (S, i, j)<sub>B</sub> = (S, i, j)<sub>0</sub>. Initially A and B also set their sequence counters to zero. Each data packet has 272 bytes (4 bytes for sequence counter value, 252 bytes for data segment and 16 bytes for hash value):
 
 |SC (4 bytes)|Data Segment (252 bytes)|HV (16 bytes)|
-|-|-|-|
+|---|---|---|
 
 **For Sender:**
 

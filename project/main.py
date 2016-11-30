@@ -10,6 +10,7 @@ def main(argv):
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument("-p", "--plaintext")
     group.add_argument("-f", "--filename")
+    parser.add_argument("-t", '--test', action='store_true')
     args = parser.parse_args()
 
     key = args.key
@@ -23,21 +24,28 @@ def main(argv):
     if args.plaintext:
         plaintext = args.plaintext
 
-    test = []
-    try:
-        print '### TEST 1 [0,1,2,3] ###\n'
-        test.append(test1(key, plaintext))
-        print '### TEST 2 [1,0,3,2] ###\n'
-        test.append(test2(key, plaintext))
-        print '### TEST 3 [3,2,1,0] ###\n'
-        test.append(test3(key, plaintext))
-    except IndexError:
-        print '\nWARNING: Message not long enough to perform all tests\n'
+    test = False
+    if args.test:
+        test = args.test
 
-    print '#  | Success?'
-    print '---+---------'
-    for i in range(len(test)):
-        print '%-2i | %s' % (i+1, test[i])
+    if test:
+        result = []
+        try:
+            print '### TEST 1 [0,1,2,3] ###\n'
+            result.append(test1(key, plaintext))
+            print '### TEST 2 [1,0,3,2] ###\n'
+            result.append(test2(key, plaintext))
+            print '### TEST 3 [3,2,1,0] ###\n'
+            result.append(test3(key, plaintext))
+        except IndexError:
+            print '\nWARNING: Message not long enough to perform all tests\n'
+
+        print '#  | Success?'
+        print '---+---------'
+        for i in range(len(result)):
+            print '%-2i | %s' % (i+1, result[i])
+    else:
+        test1(key, plaintext)
 
 def test1(key, sent):
     S = Sender(key)
@@ -51,7 +59,7 @@ def test1(key, sent):
         C = S.send(sent)
         print '### ENCRYPTED PACKETS ###'
         for c in C:
-            print c
+            print repr(c)
         print '#########################'
         err, received = R.receive(C)
         if (err == None):

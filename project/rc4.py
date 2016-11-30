@@ -17,6 +17,7 @@ class Rc4:
         return "".join(out)
 
     def applyPRGA(self):
+        #print 'Apply PRGA'
         S = self.state
         for m in range(len(S.body)):
             S.i = (S.i + 1) % 256
@@ -24,6 +25,7 @@ class Rc4:
             S.body[S.i], S.body[S.j] = S.body[S.j], S.body[S.i]
 
     def applyIPRGA(self):
+        #print 'Apply IPRGA'
         S = self.state
         for m in range(len(S.body)):
             S.body[S.i], S.body[S.j] = S.body[S.j], S.body[S.i]

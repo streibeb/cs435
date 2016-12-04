@@ -9,6 +9,14 @@ class Sender:
         self.SCA = 0;
         self.rc4 = Rc4(self.key)
 
+    #
+    # Description:
+    #     Builds packets from a given plaintext and encrypts them
+    # Input:
+    #     plaintext: The plaintext to encrypt
+    # Output:
+    #     A list of encrypted packets
+    #
     def send(self, plaintext):
         # 1. The sender divides the input plaintext message into contiguous 252-byte data
         #    segments and assigns SC to each of them. The sequence counter (SC) value is
@@ -38,6 +46,14 @@ class Sender:
 
         return encryptedPackets
 
+    #
+    # Description:
+    #     Takes a plaintext and splits it into data segments of the correct size
+    # Input:
+    #     plaintext: The text to split into packets
+    # Output:
+    #     A list of packets
+    #
     def generatePackets(self, plaintext):
         pt = bytearray(plaintext)
 
@@ -53,6 +69,14 @@ class Sender:
 
         return packets
 
+    #
+    # Description:
+    #     Appends a 1 and enough 0s to fill the packet
+    # Input:
+    #     packet: The packet to append data to
+    # Output:
+    #     N/A
+    #
     def applyPadding(self, packet):
         length = len(packet.data)
         if length  == 252:

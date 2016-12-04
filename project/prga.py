@@ -11,6 +11,9 @@ def prga(state):
         state.j = (state.j + state.body[state.i]) % 256
         state.body[state.i], state.body[state.j] = state.body[state.j], state.body[state.i]
 
+#
+# IPRGA algorithm given by the notes
+#
 def iprga(state):
     for m in range(len(state.body)):
         state.body[state.i], state.body[state.j] = state.body[state.j], state.body[state.i]
@@ -22,6 +25,7 @@ def main(argv):
     global verbose
     verbose = False
 
+    # Command Line Argument Parsing
     try:
         opts, args = getopt.getopt(argv,"hn:v",["num=", "verbose"])
     except getopt.GetoptError:
@@ -36,15 +40,18 @@ def main(argv):
         elif opt in ("-v", "--verbose"):
             verbose = True
 
+    # Sets verbose flag
     if (verbose):
         print("Number of rounds: %i" % num_rounds)
         print("")
 
+    # Initialize State
     S = State()
 
     print("=== Initial state ===")
     print(S)
 
+    # Perform n rounds of PRGA
     if (verbose):
         print("=== Start PRGA ===")
     for n in range(0, num_rounds):
@@ -58,6 +65,7 @@ def main(argv):
         print("=== After %i round PRGA ===" % num_rounds)
         print(S)
 
+    # Perform n rounds of IPRGA
     if (verbose):
         print("=== Start IPRGA ===")
     for n in range (0, num_rounds):

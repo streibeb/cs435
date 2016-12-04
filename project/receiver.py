@@ -21,6 +21,14 @@ class Receiver:
         self.SCB = 0;
         self.rc4 = Rc4(self.key)
 
+    #
+    # Description:
+    #    Decrypts and resequences packets to generate the original plaintext
+    # Input:
+    #     encryptedPackets: A list of encrypted packets
+    # Output:
+    #     The plaintext from the encrypted packets
+    #
     def receive(self, encryptedPackets):
         err = []
         packets = []
@@ -33,6 +41,8 @@ class Receiver:
             md5.update(str(p.seqCount))
             md5.update(p.data)
             if p.hash != md5.digest():
+                print p.hash
+                print md5.digest()
                 return p.seqCount, None
 
         packets.sort(key=lambda x: x.seqCount)
@@ -43,6 +53,16 @@ class Receiver:
             data.append(str(p.data))
         return None, ''.join(data)
 
+    #
+    # Description:
+    #     Recursively calculates the state given the packet's sequence counter
+    #     and RC4's internal expected sequence counter and returns the decrypted
+    #     packet
+    # Input:
+    #     packet: The packet to calculate the RC4 state for
+    # Output:
+    #     Returns the decrypted packet
+    #
     def calculateState(self, packet):
         diff = self.SCB - packet.seqCount
 
@@ -59,6 +79,14 @@ class Receiver:
             self.SCB += 1
             return self.calculateState(packet)
 
+    #
+    # Description:
+    #     Decrypts the given packet using the current internal RC4 state
+    # Input:
+    #     encryptedPacket: An encrypted packet to decrypt
+    # Output:
+    #     Returns the decrypted packet
+    #
     def generatePacket(self, encryptedPacket):
         p = Packet()
 
@@ -72,6 +100,14 @@ class Receiver:
 
         return p
 
+    #
+    # Description:
+    #     Removes padding from the given packet
+    # Input:
+    #     packet: The packet to remove padding from
+    # Output:
+    #     N/A
+    #
     def RemovePadding(self, packet):
         index = packet.indexOf(0b10000000)
         packet.data = packet.data[:index]

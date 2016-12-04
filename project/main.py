@@ -4,7 +4,8 @@ from receiver import Receiver
 from packet import EncryptedPacket
 
 def main(argv):
-
+    
+    # Command Line Argument Parsing
     parser = argparse.ArgumentParser()
     parser.add_argument("-k", "--key", required=True)
     group = parser.add_mutually_exclusive_group(required=True)
@@ -13,8 +14,10 @@ def main(argv):
     parser.add_argument("-t", '--test', action='store_true')
     args = parser.parse_args()
 
+    # Specify key to use
     key = args.key
 
+    # Specify file or plaintext to use
     plaintext = ''
     if args.filename:
         filename = args.filename
@@ -24,6 +27,7 @@ def main(argv):
     if args.plaintext:
         plaintext = args.plaintext
 
+    # Set flag if all three tests should be performed
     test = False
     if args.test:
         test = args.test
@@ -47,7 +51,18 @@ def main(argv):
     else:
         test1(key, plaintext)
 
+#
+# Description:
+#     Sends packets in the order [0,1,2,3] from Sender to Receiver
+# Input:
+#     key:  Key for use in RC4
+#     sent: Text to send
+# Output:
+#     Boolean indicating whether or not the decrypted plaintext
+#     matches the input plaintext
+#
 def test1(key, sent):
+    # Initialize Sender and Receiver with key
     S = Sender(key)
     R = Receiver(key)
 
@@ -55,12 +70,15 @@ def test1(key, sent):
     print sent
     print '############'
 
+    # Loops if there is an error with the transfer
     while True:
+        # Builds & encrypts packets to send
         C = S.send(sent)
         print '### ENCRYPTED PACKETS ###'
         for c in C:
             print repr(c)
         print '#########################'
+        # Decrypts & rebuilds packets in correct order
         err, received = R.receive(C)
         if (err == None):
             break
@@ -77,7 +95,18 @@ def test1(key, sent):
 
     return test
 
+#
+# Description:
+#     Sends packets in the order [1,0,3,2] from Sender to Receiver
+# Input:
+#     key:  Key for use in RC4
+#     sent: Text to send
+# Output:
+#     Boolean indicating whether or not the decrypted plaintext
+#     matches the input plaintext
+#
 def test2(key, sent):
+    # Initialize Sender and Receiver with key
     S = Sender(key)
     R = Receiver(key)
 
@@ -85,13 +114,16 @@ def test2(key, sent):
     print sent
     print '############'
 
+    # Loops if there is an error with the transfer
     while True:
+        # Builds & encrypts packets to send
         C = S.send(sent)
         C = [C[1],C[0],C[3],C[2]]
         print '### ENCRYPTED PACKETS ###'
         for c in C:
             print c
         print '#########################'
+        # Decrypts & rebuilds packets in correct order
         err, received = R.receive(C)
         if (err == None):
             break
@@ -108,7 +140,18 @@ def test2(key, sent):
 
     return test
 
+#
+# Description:
+#     Sends packets in the order [3,2,1,0] from Sender to Receiver
+# Input:
+#     key:  Key for use in RC4
+#     sent: Text to send
+# Output:
+#     Boolean indicating whether or not the decrypted plaintext
+#     matches the input plaintext
+#
 def test3(key, sent):
+    # Initialize Sender and Receiver with key
     S = Sender(key)
     R = Receiver(key)
 
@@ -116,13 +159,16 @@ def test3(key, sent):
     print sent
     print '############'
 
+    # Loops if there is an error with the transfer
     while True:
+        # Builds & encrypts packets to send
         C = S.send(sent)
         C = [C[3],C[2],C[1],C[0]]
         print '### ENCRYPTED PACKETS ###'
         for c in C:
             print c
         print '#########################'
+        # Decrypts & rebuilds packets in correct order
         err, received = R.receive(C)
         if (err == None):
             break
